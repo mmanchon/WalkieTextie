@@ -1,0 +1,1871 @@
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE  1
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+Warning[205]: Found directive in column 1. (LIST)
+                      00001 LIST P=18F4321, F=INHX32
+                      00002         #include <P18F4321.INC> 
+                      00001         LIST
+                      00002 
+                      00003 ;==========================================================================
+                      00004 ; Build date : Mar 21 2017
+                      00005 ;  MPASM PIC18F4321 processor include
+                      00006 ; 
+                      00007 ;  (c) Copyright 1999-2017 Microchip Technology, All rights reserved
+                      00008 ;==========================================================================
+                      00009 
+                      01455         LIST
+                      00003 
+                      00004 ;******************
+                      00005 ;* CONFIGURACIONS *
+                      00006 ;******************
+                      00007         
+                      00008         CONFIG  OSC = HS             
+                      00009         CONFIG  PBADEN = DIG
+                      00010         CONFIG  WDT = OFF
+                      00011 
+                      00012 ;*************
+                      00013 ;* VARIABLES *
+                      00014 ;*************
+                      00015 
+  00000000            00016 CONT_TEMPS EQU 0x00                 ;comptador d'interrupcions
+  00000001            00017 RECEPCION EQU 0x01                  ;variable auxiliar on guardem la recepció i enviament de la SIO
+  00000002            00018 SEGONS EQU 0x02                     ;comptador de  segons
+  00000003            00019 BLINK5 EQU 0x03                     ;flag per indicar que estem en mode blinking de 5Hz
+  00000004            00020 BLINK10 EQU 0x04                    ;flag per indicar que estem en mode blinking de 10Hz
+  00000005            00021 ROTATE EQU 0x05                     ;flag per indicar el sentit en el que hem de rotar en mode sliding
+  00000006            00022 F_SLIDE EQU 0x06                    ;flag que s'activa el primer cop que entrem a la funcio slide
+  00000007            00023 AUX_H EQU 0x07                      ;variable auxiliarque utilitzem per tractar els LEDs High en mode sl
+                            ide
+  00000008            00024 AUX_L EQU 0x08                      ;variable auxiliarque utilitzem per tractar els LEDs Low en mode sli
+                            de
+  00000009            00025 SLIDING EQU 0x09                    ;flag per indicar que estem en mode sliding
+  00000010            00026 F_ENVIA EQU 0x10                    ;flag que s'activa el primer cop que entrem a la funcio d'enviar RF
+  00000011            00027 INDEX EQU 0x11                      ;comptador de bits enviats d'un byte en RF
+  00000012            00028 MAXBIT_H EQU 0x12                   ;comptador low del numero de bytes rebuts per la SIO
+  00000013            00029 MAXBIT_L EQU 0x13                   ;comptador high del numero de bytes rebuts per la SIO
+  00000014            00030 PER10 EQU 0x14                      ;variable on guardem l'equivalent al 10% del numero de bits a enviar
+  00000015            00031 CONTA_BITS_L EQU 0x15               ;comptador low del numero de btis que portem enviats per RF
+  00000016            00032 CONTA_BITS_H EQU 0x16               ;comptador high del numero de bits que portem enviats per RF
+  00000017            00033 F_ENVIA_10 EQU 0x17 
+  00000018            00034 F_ENVIA_ID_1 EQU 0x18
+  00000019            00035 F_ENVIA_ID_2 EQU 0x19
+  00000020            00036 F_ENVIA_ID_3 EQU 0x20
+  00000021            00037 F_ENVIA_N EQU 0x21
+                      00038 
+                      00039 ;*************
+                      00040 ;* CONSTANTS *
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE  2
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00041 ;*************
+                      00042 
+                      00043 
+                      00044 ;*********************************
+                      00045 ; VECTORS DE RESET I INTERRUPCI? *
+                      00046 ;*********************************
+                      00047  
+                      00048         ORG 0x000000
+000000                00049 RESET_VECTOR
+000000 EF?? F???      00050         goto MAIN               
+                      00051 
+                      00052         ORG 0x000008
+000008                00053 HI_INT_VECTOR
+000008 EF?? F???      00054         goto    HIGH_INT        
+                      00055 
+                      00056         ORG 0x000018
+000018                00057 LOW_INT_VECTOR
+000018 0011           00058         retfie FAST
+                      00059         
+                      00060         ORG 0x000020
+                      00061         
+000020 0000           00062         DB 0x00, 0x00               ;Taula que ens dona el valor equivalent al 10% delsbits totals
+000022 0000           00063         DB 0x00, 0x00               ;a enviar per RF a partir del numero total de bytes que hem d'enviar
+000024 0000           00064         DB 0x00, 0x00
+000026 0000           00065         DB 0x00, 0x00
+000028 0800           00066         DB 0x00, 0x08
+00002A 0808           00067         DB 0x08, 0x08
+00002C 0808           00068         DB 0x08, 0x08
+00002E 0808           00069         DB 0x08, 0x08
+000030 0808           00070         DB 0x08, 0x08
+000032 1008           00071         DB 0x08, 0x10
+000034 1010           00072         DB 0x10, 0x10
+000036 1010           00073         DB 0x10, 0x10
+000038 1010           00074         DB 0x10, 0x10
+00003A 1010           00075         DB 0x10, 0x10
+00003C 1810           00076         DB 0x10, 0x18
+00003E 1818           00077         DB 0x18, 0x18
+000040 1818           00078         DB 0x18, 0x18
+000042 1818           00079         DB 0x18, 0x18
+000044 1818           00080         DB 0x18, 0x18
+000046 2018           00081         DB 0x18, 0x20
+000048 2020           00082         DB 0x20, 0x20
+00004A 2020           00083         DB 0x20, 0x20
+00004C 2020           00084         DB 0x20, 0x20
+00004E 2020           00085         DB 0x20, 0x20
+000050 2820           00086         DB 0x20, 0x28
+000052 2828           00087         DB 0x28, 0x28
+000054 2828           00088         DB 0x28, 0x28
+000056 2828           00089         DB 0x28, 0x28
+000058 2828           00090         DB 0x28, 0x28
+00005A 3028           00091         DB 0x28, 0x30
+00005C 3030           00092         DB 0x30, 0x30
+00005E 3030           00093         DB 0x30, 0x30
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE  3
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+000060 3030           00094         DB 0x30, 0x30
+000062 3030           00095         DB 0x30, 0x30
+000064 3830           00096         DB 0x30, 0x38
+000066 3838           00097         DB 0x38, 0x38
+000068 3838           00098         DB 0x38, 0x38
+00006A 3838           00099         DB 0x38, 0x38
+00006C 3838           00100         DB 0x38, 0x38
+00006E 4038           00101         DB 0x38, 0x40
+000070 4040           00102         DB 0x40, 0x40
+000072 4040           00103         DB 0x40, 0x40
+000074 4040           00104         DB 0x40, 0x40
+000076 4840           00105         DB 0x40, 0x48
+000078 4848           00106         DB 0x48, 0x48
+00007A 4848           00107         DB 0x48, 0x48
+00007C 4848           00108         DB 0x48, 0x48
+00007E 4848           00109         DB 0x48, 0x48
+000080 5048           00110         DB 0x48, 0x50
+000082 5050           00111         DB 0x50, 0x50
+000084 5050           00112         DB 0x50, 0x50
+000086 5050           00113         DB 0x50, 0x50
+000088 5050           00114         DB 0x50, 0x50
+00008A 5850           00115         DB 0x50, 0x58
+00008C 5858           00116         DB 0x58, 0x58
+00008E 5858           00117         DB 0x58, 0x58
+000090 5858           00118         DB 0x58, 0x58
+000092 5858           00119         DB 0x58, 0x58
+000094 6058           00120         DB 0x58, 0x60   
+000096 6060           00121         DB 0x60, 0x60
+000098 6060           00122         DB 0x60, 0x60
+00009A 6060           00123         DB 0x60, 0x60
+00009C 6060           00124         DB 0x60, 0x60
+00009E 6860           00125         DB 0x60, 0x68
+0000A0 6868           00126         DB 0x68, 0x68
+0000A2 6868           00127         DB 0x68, 0x68
+0000A4 6868           00128         DB 0x68, 0x68
+0000A6 6868           00129         DB 0x68, 0x68
+0000A8 7068           00130         DB 0x68, 0x70
+0000AA 7070           00131         DB 0x70, 0x70
+0000AC 7070           00132         DB 0x70, 0x70
+0000AE 7070           00133         DB 0x70, 0x70
+0000B0 7070           00134         DB 0x70, 0x70
+0000B2 7870           00135         DB 0x70, 0x78
+0000B4 7878           00136         DB 0x78, 0x78
+0000B6 7878           00137         DB 0x78, 0x78
+0000B8 7878           00138         DB 0x78, 0x78
+0000BA 7878           00139         DB 0x78, 0x78
+0000BC 8078           00140         DB 0x78, 0x80
+0000BE 8080           00141         DB 0x80, 0x80
+0000C0 8080           00142         DB 0x80, 0x80
+0000C2 8080           00143         DB 0x80, 0x80
+0000C4 8080           00144         DB 0x80, 0x80
+0000C6 8880           00145         DB 0x80, 0x88
+0000C8 8888           00146         DB 0x88, 0x88
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE  4
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0000CA 8888           00147         DB 0x88, 0x88
+0000CC 8888           00148         DB 0x88, 0x88
+0000CE 8888           00149         DB 0x88, 0x88
+0000D0 9088           00150         DB 0x88, 0x90
+0000D2 9090           00151         DB 0x90, 0x90
+0000D4 9090           00152         DB 0x90, 0x90
+0000D6 9090           00153         DB 0x90, 0x90
+0000D8 9090           00154         DB 0x90, 0x90
+0000DA 9890           00155         DB 0x90, 0x98
+0000DC 9898           00156         DB 0x98, 0x98
+0000DE 9898           00157         DB 0x98, 0x98
+0000E0 9898           00158         DB 0x98, 0x98
+0000E2 9898           00159         DB 0x98, 0x98
+0000E4 A098           00160         DB 0x98, 0xA0
+0000E6 A0A0           00161         DB 0xA0, 0xA0
+0000E8 A0A0           00162         DB 0xA0, 0xA0
+0000EA A0A0           00163         DB 0xA0, 0xA0
+0000EC A0A0           00164         DB 0xA0, 0xA0
+0000EE A8A0           00165         DB 0xA0, 0xA8
+0000F0 A8A8           00166         DB 0xA8, 0xA8
+0000F2 A8A8           00167         DB 0xA8, 0xA8
+0000F4 A8A8           00168         DB 0xA8, 0xA8
+0000F6 A8A8           00169         DB 0xA8, 0xA8
+0000F8 B0A8           00170         DB 0xA8, 0xB0
+0000FA B0B0           00171         DB 0xB0, 0xB0
+0000FC B0B0           00172         DB 0xB0, 0xB0
+0000FE B0B0           00173         DB 0xB0, 0xB0
+000100 B0B0           00174         DB 0xB0, 0xB0
+000102 B8B0           00175         DB 0xB0, 0xB8
+000104 B8B8           00176         DB 0xB8, 0xB8
+000106 B8B8           00177         DB 0xB8, 0xB8
+000108 B8B8           00178         DB 0xB8, 0xB8
+00010A B8B8           00179         DB 0xB8, 0xB8
+00010C C0B8           00180         DB 0xB8, 0xC0
+00010E C0C0           00181         DB 0xC0, 0xC0
+000110 C0C0           00182         DB 0xC0, 0xC0
+000112 C0C0           00183         DB 0xC0, 0xC0
+000114 C0C0           00184         DB 0xC0, 0xC0
+000116 C8C0           00185         DB 0xC0, 0xC8
+000118 C8C8           00186         DB 0xC8, 0xC8
+00011A C8C8           00187         DB 0xC8, 0xC8
+00011C C8C8           00188         DB 0xC8, 0xC8
+00011E C8C8           00189         DB 0xC8, 0xC8
+000120 D0C8           00190         DB 0xC8, 0xD0
+000122 D0D0           00191         DB 0xD0, 0xD0
+000124 D0D0           00192         DB 0xD0, 0xD0
+000126 D0D0           00193         DB 0xD0, 0xD0
+000128 D0D0           00194         DB 0xD0, 0xD0
+00012A D8D0           00195         DB 0xD0, 0xD8
+00012C D8D8           00196         DB 0xD8, 0xD8
+00012E D8D8           00197         DB 0xD8, 0xD8
+000130 D8D8           00198         DB 0xD8, 0xD8
+000132 D8D8           00199         DB 0xD8, 0xD8
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE  5
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+000134 E0D8           00200         DB 0xD8, 0xE0
+000136 E0E0           00201         DB 0xE0, 0xE0
+000138 E0E0           00202         DB 0xE0, 0xE0
+00013A E0E0           00203         DB 0xE0, 0xE0
+00013C E0E0           00204         DB 0xE0, 0xE0
+00013E E8E0           00205         DB 0xE0, 0xE8
+000140 E8E8           00206         DB 0xE8, 0xE8
+000142 E8E8           00207         DB 0xE8, 0xE8
+000144 E8E8           00208         DB 0xE8, 0xE8
+000146 E8E8           00209         DB 0xE8, 0xE8
+000148 F0E8           00210         DB 0xE8, 0xF0
+                      00211 
+                      00212 
+                      00213 ;***********************************
+                      00214 ;* RUTINES DE SERVEI D'INTERRUPCI? *
+                      00215 ;***********************************
+                      00216         
+00014A                00217 HIGH_INT
+00014A EC?? F???      00218         call RESET_TIMER            ;carreguem el valor inicial al timer
+00014E 2A00           00219         incf CONT_TEMPS,1,0         ;incrementem el comptador d'interrupcions
+000150 0EC8           00220         movlw 0xC8                  ;200d
+000152 6200           00221         cpfseq CONT_TEMPS,0         ;mirem si ha passat un segon
+000154 0011           00222             retfie FAST
+000156 2A02           00223         incf SEGONS,1,0             ;incrementem la variable segons
+000158 6A00           00224         clrf CONT_TEMPS, 0          ;posem el comptador d'interrupcions a 0
+00015A 0011           00225         retfie FAST
+                      00226         
+                      00227 ;****************************
+                      00228 ;* MAIN I RESTA DE FUNCIONS *
+                      00229 ;****************************
+                      00230 
+00015C                00231 INIT_TIMER
+                      00232 ;**************************************************************************
+                      00233 ;* T0CON 10001000 (estan en orden los bits de abajo)                      *
+                      00234 ;* TMR0ON 1 para activar el TIMER0                                        *
+                      00235 ;* T08bit 0 para timer de 16bits                                          *
+                      00236 ;* T0CS 0 para usar el clock interno                                      *
+                      00237 ;* T0SE 0 para ir de low-to-high                                          *
+                      00238 ;* PSA 1 para desactivar el prescaler (los siguientes bit son 0 entonces) *
+                      00239 ;**************************************************************************
+00015C 0E88           00240         movlw 0x88
+00015E 6ED5           00241         movwf T0CON,0
+000160 9ED0           00242         bcf RCON,IPEN,0             ;Reseteamos el bit IPEN de RCON
+                      00243 ;*************************************************************************************************
+                      00244 ;* E0h = 1110 0000                                                                               *
+                      00245 ;* activamos todas las interrupciones                                                            *
+                      00246 ;* activamos el bit de overflow                                                                  * 
+                      00247 ;* desactivamos las interrupciones externas y hacemos que el registro de TIMER0 no haga overflow *
+                      00248 ;*************************************************************************************************
+000162 0EE0           00249         movlw 0xE0
+000164 6EF2           00250         movwf INTCON, 0
+000166 EC?? F???      00251         call RESET_TIMER
+00016A 0012           00252         return
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE  6
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00253 
+00016C                00254 INIT_VARS
+00016C 6A00           00255         clrf CONT_TEMPS,0           ;posem a 0 totes les variables i flags que utilitzarem
+00016E 6A01           00256         clrf RECEPCION,0
+000170 6A03           00257         clrf BLINK5,0
+000172 6A04           00258         clrf BLINK10,0
+000174 6A02           00259         clrf SEGONS,0
+000176 6A05           00260         clrf ROTATE,0
+000178 6A09           00261         clrf SLIDING,0
+00017A 6A06           00262         clrf F_SLIDE,0
+00017C 6A07           00263         clrf AUX_H,0
+00017E 6A08           00264         clrf AUX_L,0
+000180 6A10           00265         clrf F_ENVIA,0
+000182 6A11           00266         clrf INDEX,0
+000184 6A12           00267         clrf MAXBIT_H, 0
+000186 6A13           00268         clrf MAXBIT_L, 0
+000188 6A14           00269         clrf PER10, 0
+00018A 6A15           00270         clrf CONTA_BITS_L, 0
+00018C 6A16           00271         clrf CONTA_BITS_H, 0
+00018E 6A17           00272         clrf F_ENVIA_10,0
+000190 6A18           00273         clrf F_ENVIA_ID_1,0
+000192 6A19           00274         clrf F_ENVIA_ID_2,0
+000194 6A20           00275         clrf F_ENVIA_ID_3,0
+000196 6A21           00276         clrf F_ENVIA_N,0
+000198                00277 INIT_RAM
+000198 0E80           00278         movlw 0x80                  ;inicialitzem els punters de lectura i escriptura de la RAM a la pos
+                            ició inicial del nostre array
+00019A 6EE9           00279         movwf FSR0L, 0
+00019C 6EE1           00280         movwf FSR1L, 0
+00019E 6AEA           00281         clrf FSR0H, 0
+0001A0 6AE2           00282         clrf FSR1H, 0
+0001A2 0012           00283         return
+                      00284 
+0001A4                00285 INIT_PORT
+0001A4 6A95           00286         clrf TRISD,0                ;els ports D i E seran tots de sortida
+0001A6 6A96           00287         clrf TRISE,0            
+0001A8 6A92           00288         clrf TRISA,0                ;nomes RA0 sera de sortida
+0001AA 0E03           00289         movlw 0x03
+0001AC 6E93           00290         movwf TRISB,0               ;nomes RB0 i RB1 seran d'entrada
+0001AE 0EC0           00291         movlw 0xC0
+0001B0 6E94           00292         movwf TRISC,0               ;Configurem com entrada els ports de la SIO RC6 y RC7
+0001B2 6A8C           00293         clrf LATD, 0                ;netegem els LEDs
+0001B4 6A8D           00294         clrf LATE, 0
+0001B6 0012           00295         return
+                      00296         
+0001B8                00297 INIT_SIO
+                      00298 ;****************************************************
+                      00299 ;* RCSTA 10010000                                   *
+                      00300 ;* SPEN 1 Ponemos que podamos recibir               *
+                      00301 ;* RX9 0 para recibir 8 bits                        *
+                      00302 ;* SREN 0 no nos importa                            *
+                      00303 ;* CREN 1 activamos el reciver                      *
+                      00304 ;* ADDEN 0 no nos importa porque no tenemos el 9bit *
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE  7
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00305 ;* FERR 0 not farming error                         *
+                      00306 ;* OERR 0 no overrun error                          *
+                      00307 ;* RX9D el noveno bit                               *
+                      00308 ;****************************************************
+0001B8 0E90           00309         movlw 0x90
+0001BA 6EAB           00310         movwf RCSTA,0
+                      00311 ;***********************************************
+                      00312 ;* TXSTA 00100110                              *
+                      00313 ;* CSRC 0 para transmitir con el clock externo *
+                      00314 ;* Tx9 0 transmitiremos 8 bits                 *
+                      00315 ;* TXEN 1 enable para poder transmitir         *
+                      00316 ;* SYNC 0 ponemos la EUSART asyncrona          * 
+                      00317 ;* SENDB 0 break del sincronismo               *
+                      00318 ;* BRGH 1 lo ponemos a alta velocidad          *
+                      00319 ;* TRMT 1 TSR para enviar datos esta vacio     *
+                      00320 ;* TX9D 0 el noveno bit                        *
+                      00321 ;***********************************************
+0001BC 0E26           00322         movlw 0x26
+0001BE 6EAC           00323         movwf TXSTA,0
+0001C0 6AB8           00324         clrf BAUDCON,0
+                      00325 ;*********************************************************
+                      00326 ;* para que el baudRate = 19.2k tenemos que              *
+                      00327 ;* mirar los bits SYNC, BRGH y BRG16 (solo BRGH es 1)    *
+                      00328 ;* asi que vamos a la tabla y miramos el valor 31d = 1Fh *
+                      00329 ;*********************************************************
+0001C2 0E40           00330         movlw 0x40
+0001C4 6EAF           00331         movwf SPBRG,0
+                      00332         
+0001C6 0012           00333         return
+                      00334         
+0001C8                00335 RESET_TIMER
+                      00336 ;*******************************
+                      00337 ;* tendremos un clock de 10MHz *
+                      00338 ;* por lo que iremos a 400ns   *
+                      00339 ;* 65539-12.500 = 53039        *
+                      00340 ;* interrupcion cada 5ms       *
+                      00341 ;*******************************
+0001C8 0ECF           00342         movlw 0xCF
+0001CA 6ED7           00343         movwf TMR0H,0
+0001CC 0E2F           00344         movlw 0x2F
+0001CE 6ED6           00345         movwf TMR0L,0
+0001D0 94F2           00346         bcf INTCON,TMR0IF,0         ;reseteamos el bit de overflow
+0001D2 0012           00347         return
+                      00348         
+                      00349 ;********
+                      00350 ;* MAIN *
+                      00351 ;********
+                      00352 
+0001D4                00353 MAIN
+0001D4 EC?? F???      00354         call INIT_TIMER             ;inicialitzacio dels ports, variables i configuracions
+0001D8 EC?? F???      00355         call INIT_VARS
+0001DC EC?? F???      00356         call INIT_PORT
+0001E0 EC?? F???      00357         call INIT_SIO
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE  8
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00358         
+0001E4                00359 LOOP
+0001E4 B081           00360         btfsc PORTB, 0, 0           ;comrovem si ens han apretat el polsador carrega
+0001E6 EF?? F???      00361             goto CARREGA_M
+0001EA B281           00362         btfsc PORTB, 1, 0           ;comrovem si ens han apretat el polsador envia
+0001EC EF?? F???      00363             goto ENVIA_M
+0001F0 BA9E           00364         btfsc PIR1,RCIF,0           ;comprovem si hem rebut algo per la SIO
+0001F2 EF?? F???      00365             goto RECEPCION_PC
+0001F6 A003           00366         btfss BLINK5,0,0            ;comprovem si hem de fer el blink de 5hz
+0001F8 EF?? F???      00367             goto CONTINUA           ;en cas de que no sigui necessari fer blink saltarem a la segeent co
+                            mprovacio
+0001FC 0E14           00368         movlw 0x14                  ;si hem de fer el blink llavors comparem amb 40d que seran 200ms
+0001FE 6000           00369         cpfslt CONT_TEMPS,0
+000200 EF?? F???      00370             goto BLINK
+000204                00371 CONTINUA
+000204 A004           00372         btfss BLINK10,0,0           ;comprovem si hem de fer el blink de 10Hz
+000206 EF?? F???      00373             goto CONTINUA_2         ;en cas de que no sigui necessari fer blink saltarem a la segeent co
+                            mprovacio
+00020A 0E0A           00374         movlw 0x0A                  ;si hem de fer el blink llavors comparem amb 20d que seran 100ms
+00020C 6000           00375         cpfslt CONT_TEMPS,0         
+00020E EF?? F???      00376             goto BLINK
+000212                00377 CONTINUA_2
+000212 A009           00378         btfss SLIDING,0,0           ;comprova si hem de fer sliding
+000214 EF?? F???      00379             goto CONTINUA_3         ;en cas de que no sigui necessari fer slide saltarem a la segeent co
+                            mprovacio
+000218 0E0A           00380         movlw 0x0A                  ;si hem de fer el slide llavors comparem amb 20d que seran 100ms
+00021A 6000           00381         cpfslt CONT_TEMPS,0
+00021C EF?? F???      00382             goto SLIDE
+000220 EF?? F???      00383         goto LOOP
+                      00384         
+000224                00385 CONTINUA_3
+000224 6A06           00386         clrf F_SLIDE,0              ;en cas que ja no haguem de fer slide posem a 0 el flag d'inici de s
+                            lide
+000226 EF?? F???      00387         goto LOOP
+                      00388         
+00022A                00389 INIT_SLIDE
+00022A 6A8D           00390         clrf LATE,0                 ;posem a 0 slide high
+00022C 0E03           00391         movlw 0x03                  ;carreguem el valor 0000 0011 inicial del slide low
+00022E 6E8C           00392         movwf LATD,0
+000230 6806           00393         setf F_SLIDE,0              ;activem el flag d'inici de slilde
+000232 0012           00394         return
+                      00395 
+000234                00396 RECEPCION_PC
+000234 6A09           00397         clrf SLIDING, 0             ;netegem els flags i posem els LEDs a 0
+000236 6A03           00398         clrf BLINK5, 0
+000238 6A04           00399         clrf BLINK10, 0
+00023A 6A8C           00400         clrf LATD, 0
+00023C 6A8D           00401         clrf LATE, 0
+00023E CFAE F001      00402         movff RCREG, RECEPCION      ;mirem què hem rebut del PC
+000242 0E01           00403         movlw 0x01
+000244 6201           00404         cpfseq RECEPCION
+000246 EF?? F???      00405             goto ENVIA_RF_PC        ;si el PC ens envia un 2 enviem el missatge de la RAM per RF
+00024A                00406 CARREGA_PC                          ;si el PC ens envia un 1 carreguem el missatge que ens envia a la RA
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE  9
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                            M
+00024A EC?? F???      00407         call INIT_ESCRIPTURA_RAM    ;inicialitzem els punters d'escriptura de la RAM a la posicio inicia
+                            l
+00024E                00408 WAIT_BYTE
+00024E AA9E           00409         btfss PIR1,RCIF,0           ;esperem a rebre un byte del PC
+000250 EF?? F???      00410             goto WAIT_BYTE
+000254                00411 REBUT_PC
+000254 CFAE F001      00412         movff RCREG, RECEPCION
+000258 0E00           00413         movlw 0x00                  ;si el PC ens envia 0x00 s'ha acabat la recepcio i fem blink, sino g
+                            uardem a la RAM
+00025A 6401           00414         cpfsgt RECEPCION, 0
+00025C EF?? F???      00415             goto SET_BLINK5         ;activem el flag de blink de 5Hz
+000260 C001 FFEE      00416         movff RECEPCION, POSTINC0   ;guardem el byte rebut a la RAM
+000264 EC?? F???      00417         call INC_MAXBIT
+000268                00418 WHILE_TRAMA_PC
+000268 BA9E           00419         btfsc PIR1, RCIF, 0         ;esperem a rebre un nou byte
+00026A EF?? F???      00420             goto REBUT_PC
+00026E EF?? F???      00421         goto WHILE_TRAMA_PC
+                      00422 
+000272                00423 SET_BLINK5
+000272 6803           00424         setf BLINK5, 0              ;activem el flag de blink de 5Hz i tornem al bucle
+000274 EF?? F???      00425         goto LOOP
+                      00426         
+000278                00427 INC_MAXBIT
+000278 2A13           00428         incf MAXBIT_L, 1, 0         ;incrementem el numero de bytes que portem llegits de la SIO
+00027A A0D8           00429         btfss STATUS, C, 0
+00027C 0012           00430             return
+00027E 2A12           00431         incf MAXBIT_H, 1, 0
+000280 6A13           00432         clrf MAXBIT_L, 0
+000282 0012           00433         return
+                      00434         
+                      00435         ;IMPORTANTE FUNCION PARA SABER SI ESCRIBIMOS BIEN DE LA RAM
+                      00436         ;goto ENVIA_TX
+                      00437         
+                      00438 ;ENVIA_TX
+                      00439         ;call INIT_LECTURA_RAM
+                      00440 ;COMPARA_PUNTERS_TX
+                      00441         ;movff RCREG,RECEPCION
+                      00442         ;movf FSR0L,0,0
+                      00443         ;cpfseq FSR1L, 0
+                      00444             ;goto DIFERENTS_TX
+                      00445         ;movf FSR0H,0,0
+                      00446         ;cpfseq FSR1H, 0
+                      00447             ;goto DIFERENTS_TX
+                      00448         ;goto IGUALS_TX
+                      00449 ;DIFERENTS_TX
+                      00450         ;incf INDEX,1,0
+                      00451         ;movff POSTINC1, TXREG
+                      00452 ;ENVIA_SIGUIENTE
+                      00453         ;btfsc PIR1,RCIF,0
+                      00454             ;goto COMPARA_PUNTERS_TX
+                      00455         ;goto ENVIA_SIGUIENTE
+                      00456 ;IGUALS_TX
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 10
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00457         ;movlw 0x03
+                      00458         ;movwf TXREG,0
+                      00459         ;movff INDEX,LATD
+                      00460         ;goto LOOP
+                      00461         
+000284                00462 ENVIA_RF_PC
+000284 EC?? F???      00463         call INIT_LECTURA_RAM       ;inicialitzem els punters de lectura de la RAM la posicio inicial
+000288 EF?? F???      00464         goto COMPARA_PUNTERS
+                      00465         
+00028C                00466 CARREGA_M
+00028C 6A09           00467         clrf SLIDING, 0             ;netegem els flags i posem els LEDs a 0
+00028E 6A06           00468         clrf F_SLIDE, 0
+000290 6A03           00469         clrf BLINK5, 0
+000292 6A04           00470         clrf BLINK10, 0
+000294 6A8C           00471         clrf LATD, 0
+000296 6A8D           00472         clrf LATE, 0
+000298 6A00           00473         clrf CONT_TEMPS, 0
+00029A EC?? F???      00474         call ESPERA_REBOTS          ;esperem 15ms de rebots
+00029E A081           00475         btfss PORTB, 0, 0           ;si es 0 eren rebots i esperarem que acabin per tornar al bucle
+0002A0 EF?? F???      00476             goto WHILE_CARREGA
+0002A4 EC?? F???      00477         call ENVIA_PC               ;demanem al PC que ens envii el text
+0002A8 6A00           00478         clrf CONT_TEMPS, 0
+0002AA 6A02           00479         clrf SEGONS, 0
+0002AC                00480 ESPERA_10
+0002AC BA9E           00481         btfsc PIR1, RCIF,  0        ;comprovem si el PC respon amb una trama
+0002AE EF?? F???      00482             goto REBUT_2                    ;guardem la trama
+0002B2 0E0A           00483         movlw 0x0A
+0002B4 6202           00484         cpfseq SEGONS, 0            ;comprovem si han passat 10 segons
+0002B6 EF?? F???      00485             goto ESPERA_10
+0002BA 6809           00486         setf SLIDING, 0             ;si han passat 10 segons passem a fr slide
+0002BC                00487 WHILE_CARREGA
+0002BC B080           00488         btfsc PORTA, 0, 0           ;esperem els rebots de baixada o que deixin de premer el polsador
+0002BE EF?? F???      00489             goto WHILE_CARREGA
+0002C2 EF?? F???      00490         goto LOOP
+                      00491         
+0002C6                00492 INIT_ESCRIPTURA_RAM
+0002C6 6AEA           00493         clrf FSR0H,  0              ;inicialitzem els punters a la primera posició del array a la RAM
+0002C8 0E80           00494         movlw 0x80
+0002CA 6EE9           00495         movwf FSR0L, 0
+0002CC 6A11           00496         clrf INDEX, 0
+0002CE 6A12           00497         clrf MAXBIT_H, 0
+0002D0 6A13           00498         clrf MAXBIT_L, 0
+0002D2 0012           00499         return
+                      00500 
+0002D4                00501 ENVIA_PC
+0002D4 0E02           00502         movlw 0x02                  ;enviem la trama 0000 0010 al PC per demanar un text
+0002D6 6EAD           00503         movwf TXREG, 0
+0002D8 0012           00504         return
+                      00505         
+0002DA                00506 REBUT_2
+0002DA EC?? F???      00507         call INIT_ESCRIPTURA_RAM    ;si es 1 inicialitzem els punters d'escriptura de la RAM
+0002DE                00508 REBUT
+0002DE CFAE F001      00509         movff RCREG, RECEPCION      
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 11
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0002E2 0E00           00510         movlw 0x00
+0002E4 6401           00511         cpfsgt RECEPCION, 0         ;comprovem si la trama rebuda es 0x00, si ho es hem acabat la recepc
+                            io
+0002E6 EF?? F???      00512             goto SET_BLINK5_M       ;passem a fer blink de 10Hz
+0002EA C001 FFEE      00513         movff RECEPCION, POSTINC0   ;guardem la trama a la memoria RAM
+0002EE EC?? F???      00514         call INC_MAXBIT
+0002F2                00515 WHILE_TRAMA
+0002F2 BA9E           00516         btfsc PIR1, RCIF, 0         ;esperem una nova trama del PC
+0002F4 EF?? F???      00517             goto REBUT
+0002F8 EF?? F???      00518         goto WHILE_TRAMA
+                      00519 
+0002FC                00520 SET_BLINK5_M
+0002FC 6803           00521         setf BLINK5, 0              ;activem el flag de blink de 10Hz
+0002FE EF?? F???      00522         goto WHILE_CARREGA          ;esperem que deixin de premer el polsador
+                      00523         
+000302                00524 ESPERA_REBOTS
+000302 0E03           00525         movlw 0x03
+000304 6200           00526         cpfseq CONT_TEMPS, 0        ;comprovem si han passat 15ms
+000306 EF?? F???      00527             goto ESPERA_REBOTS
+00030A 0012           00528         return
+                      00529                 
+00030C                00530 ENVIA_M
+00030C 6A09           00531         clrf SLIDING, 0             ;posem els flags a 0 i netegem els LEDs
+00030E 6A06           00532         clrf F_SLIDE, 0
+000310 6A03           00533         clrf BLINK5, 0
+000312 6A04           00534         clrf BLINK10, 0
+000314 6A8C           00535         clrf LATD, 0
+000316 6A8D           00536         clrf LATE, 0
+000318 6A00           00537         clrf CONT_TEMPS, 0          ;posem el comptador de temps a 0
+00031A EC?? F???      00538         call ESPERA_REBOTS          ;esperem els rebots del polsador (15ms)
+00031E A281           00539         btfss PORTB, 1, 0
+000320 EF?? F???      00540             goto WHILE_ENVIA
+000324 EC?? F???      00541         call INIT_LECTURA_RAM       ;inicialitzem els punters de lectura de la RAM
+000328                00542 COMPARA_PUNTERS
+000328 50EA           00543         movf FSR0H, 0, 0
+00032A 62E2           00544         cpfseq FSR1H, 0             ;comparem els punters high de lectura i escriptura
+00032C EF?? F???      00545             goto DIFERENTS          ;si son diferents enviem el valor dels punters
+000330 50E9           00546         movf FSR0L, 0, 0
+000332 62E1           00547         cpfseq FSR1L, 0             ;comparem els punters low de lectura i escriptura
+000334 EF?? F???      00548             goto DIFERENTS          ;si son diferents enviem el valor dels punters
+000338 EF?? F???      00549         goto IGUALS                 ;si son iguals hem acabat la transmissio RF
+00033C                00550 DIFERENTS
+                      00551         
+00033C A010           00552         btfss F_ENVIA, 0, 0
+00033E EF?? F???      00553             goto INIT_RF            ;enviem l'inici de transmissio RF i posem F_ENVIA a 1
+000342 B017           00554         btfsc F_ENVIA_10,0,0
+000344 EC?? F???      00555             call ESPERA_10_RF
+000348 B021           00556         btfsc F_ENVIA_N,0,0
+00034A EF?? F???      00557             goto ENVIA_N
+00034E B018           00558         btfsc F_ENVIA_ID_1,0,0
+000350 EF?? F???      00559             goto ENVIA_ID_1
+000354 B019           00560         btfsc F_ENVIA_ID_2,0,0
+000356 EF?? F???      00561             goto ENVIA_ID_2
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 12
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00035A B020           00562         btfsc F_ENVIA_ID_3,0,0
+00035C EF?? F???      00563             goto ENVIA_ID_3
+000360 CFE6 F001      00564         movff POSTINC1, RECEPCION   
+000364                00565 NEXT_BIT
+000364 EC?? F???      00566         call COMPROVA_LEDS_P
+000368 BE01           00567         btfsc RECEPCION, 7, 0       ;en funcio del bit 0 de la variable recepcion:
+00036A EF?? F???      00568             goto ENVIA_1            ;enviem un 1 amb codi Manchester
+00036E                00569 ENVIA_0                             ;enviem un 0 amb codi Manchester
+00036E A000           00570         btfss CONT_TEMPS,0,0        ;esperem una interrupcio de timer (5ms)
+000370 EF?? F???      00571             goto ENVIA_0
+000374 6A00           00572         clrf CONT_TEMPS, 0          ;posem a 0 el comptador d'interrupcions
+000376 0E01           00573         movlw 0x01
+000378 6E89           00574         movwf LATA, 0               ;posem un 1 al RF
+00037A                00575 ENVIA_0_2
+00037A A000           00576         btfss CONT_TEMPS,0,0        ;esperem una interrupcio de timer (5ms)
+00037C EF?? F???      00577             goto ENVIA_0_2
+000380 6A00           00578         clrf CONT_TEMPS, 0          ;posem a 0 el comptador d'interrupcions
+000382 6A89           00579         clrf LATA, 0                ;posem un 0 al RF
+000384 EF?? F???      00580         goto COMPARA_INDEX
+                      00581 
+000388                00582 ENVIA_1
+000388 A000           00583         btfss CONT_TEMPS,0,0        ;esperem una interrupcio de timer (5ms)
+00038A EF?? F???      00584             goto ENVIA_1            
+00038E 6A00           00585         clrf CONT_TEMPS, 0          ;posem a 0 el comptador d'interrupcions
+000390 6A89           00586         clrf LATA, 0                ;posem un 0 al RF
+000392                00587 ENVIA_1_2
+000392 A000           00588         btfss CONT_TEMPS,0,0        ;esperem una interrupcio de timer (5ms)
+000394 EF?? F???      00589             goto ENVIA_1_2
+000398 6A00           00590         clrf CONT_TEMPS, 0          ;posem a 0 el comptador d'interrupcions
+00039A 0E01           00591         movlw 0x01
+00039C 6E89           00592         movwf LATA, 0               ;posem un 1 al RF
+00039E EF?? F???      00593         goto COMPARA_INDEX
+                      00594         
+0003A2                00595 COMPARA_INDEX
+0003A2 4601           00596         rlncf RECEPCION, 1, 0       ;rotem la variable per posar el seguent bit a l aposicio 0
+0003A4 2A11           00597         incf INDEX, 1, 0            ;incrementem el comptador de bits
+0003A6 0E08           00598         movlw 0x08
+0003A8 6211           00599         cpfseq INDEX, 0             ;si ja hem enviat 8 bits passem al seguent byte
+0003AA EF?? F???      00600             goto NEXT_BIT           ;anem a enviar el seguent bit
+0003AE 6A11           00601         clrf INDEX, 0               ;anem a enviar el seguent byte
+0003B0 EF?? F???      00602         goto COMPARA_PUNTERS
+                      00603         
+0003B4                00604 COMPROVA_LEDS_P
+0003B4 2A15           00605         incf CONTA_BITS_L, 1, 0     ;incrementem el numer de bits que portem enviats
+0003B6 5015           00606         movf CONTA_BITS_L, 0
+0003B8 6214           00607         cpfseq PER10, 0             ;comparem si hem enviat l'equivalent al 10% dels bits
+0003BA 0012           00608             return
+0003BC 6A15           00609         clrf CONTA_BITS_L, 0
+0003BE EC?? F???      00610         call ROTATE_PER100          ;si hem enviat el 10% encenem un LED mes
+0003C2 0012           00611         return
+                      00612         
+0003C4                00613 ROTATE_PER100
+0003C4 0EFF           00614         movlw 0xFF
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 13
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0003C6 628C           00615         cpfseq LATD, 0              ;si ja tenim tot el LATD ences encenem els del LATE
+0003C8 EF?? F???      00616             goto INC_PER100
+0003CC 0E00           00617         movlw 0x00
+0003CE 648D           00618         cpfsgt LATE, 0
+0003D0 EF?? F???      00619             goto INC_1
+0003D4 0E03           00620         movlw 0x03
+0003D6 6E8D           00621         movwf LATE, 0
+0003D8 0012           00622         return
+0003DA                00623 INC_1
+0003DA 2A8D           00624         incf LATE, 1, 0
+0003DC 0012           00625         return
+0003DE                00626 INC_PER100
+0003DE 468C           00627         rlncf LATD, 1, 0            ;rotem el valor dels LEDs, netegem el bit que hem rotat i hi  posem 
+                            un 1
+0003E0 0EFE           00628         movlw 0xFE
+0003E2 168C           00629         andwf LATD, 1, 0
+0003E4 2A8C           00630         incf LATD, 1, 0
+0003E6 0012           00631         return
+                      00632         
+0003E8                00633 SET_LEDS_P
+0003E8 C013 F015      00634         movff MAXBIT_L,CONTA_BITS_L
+0003EC C012 F016      00635         movff MAXBIT_H,CONTA_BITS_H
+0003F0 0E20           00636         movlw 0x20
+0003F2 2615           00637         addwf CONTA_BITS_L, 1, 0    ;sumem 0x20 al valor de bytes totals per accedir a la taula
+0003F4 A0D8           00638         btfss STATUS, C, 0
+0003F6 EF?? F???      00639             goto CONTINUA_SET_LEDS
+0003FA 6A15           00640         clrf CONTA_BITS_L, 0
+0003FC 2A16           00641         incf CONTA_BITS_H, 1, 0
+0003FE                00642 CONTINUA_SET_LEDS
+0003FE 6AF8           00643         clrf TBLPTRU, 0             ;movem els valors als punters de l taula de la flash
+000400 C016 FFF7      00644         movff CONTA_BITS_H, TBLPTRH
+000404 C015 FFF6      00645         movff CONTA_BITS_L, TBLPTRL
+000408 0008           00646         tblrd *                     ;llegim el valor de la taula
+00040A CFF5 F014      00647         movff TABLAT, PER10         ;copiem el valor de la taula a la variable PER10
+00040E 6A15           00648         clrf CONTA_BITS_L, 0        ;posem el comptador de bits enviats a 0
+000410 6A16           00649         clrf CONTA_BITS_H, 0
+000412 0012           00650         return
+                      00651         
+000414                00652 SET_SLIDE
+000414 6809           00653         setf SLIDING, 0 ;activem el flag que ens indica que hem de fer slide
+000416 EF?? F???      00654         goto WHILE_ENVIA
+                      00655 
+00041A                00656 IGUALS
+00041A A010           00657         btfss F_ENVIA, 0, 0
+00041C EF?? F???      00658             goto SET_SLIDE
+000420 6A10           00659         clrf F_ENVIA, 0             ;posem a 0 el flag d'inici de RF
+000422 6804           00660         setf BLINK10, 0             ;posem a 1 e flag de mode blinking de 10Hz
+                      00661 
+000424                00662 WHILE_ENVIA
+000424 B281           00663         btfsc PORTB, 1, 0           ;esperem que es deixi de premer el polsador envia
+000426 EF?? F???      00664             goto WHILE_ENVIA
+00042A EF?? F???      00665         goto LOOP
+                      00666 
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 14
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00042E                00667 INIT_RF
+00042E 6810           00668         setf F_ENVIA, 0             ;activem el flag de init rf perque no torni a enviar l'inici
+000430 0EFF           00669         movlw 0xFF
+000432 6E01           00670         movwf RECEPCION, 0          ;carreguem la combinacio 1111 1111b perque s'envii en RF pr indicar 
+                            l'inici de la trama
+000434 EC?? F???      00671         call SET_LEDS_P
+000438 6A11           00672         clrf INDEX,0
+00043A 6817           00673         setf F_ENVIA_10,0
+00043C EF?? F???      00674         goto NEXT_BIT
+                      00675         
+000440                00676 ESPERA_10_RF
+000440 A000           00677         btfss CONT_TEMPS,0,0
+000442 EF?? F???      00678             goto ESPERA_10_RF
+000446 6A17           00679         clrf F_ENVIA_10,0
+000448 6A00           00680         clrf CONT_TEMPS, 0
+00044A 0E01           00681         movlw 0x01
+00044C 6A89           00682         clrf LATA,0
+00044E                00683 ESPERA_10_RF_2
+00044E 6200           00684         cpfseq CONT_TEMPS, 0
+000450 EF?? F???      00685             goto ESPERA_10_RF_2
+000454 6A00           00686         clrf CONT_TEMPS,0
+000456 6821           00687         setf F_ENVIA_N,0
+000458 0012           00688         return
+                      00689 
+00045A                00690 ENVIA_ID_1
+00045A 0E01           00691         movlw 0x01
+00045C 6E01           00692         movwf RECEPCION,0
+00045E 6A18           00693         clrf F_ENVIA_ID_1,0
+000460 6819           00694         setf F_ENVIA_ID_2,0
+000462 EF?? F???      00695         goto NEXT_BIT
+                      00696 
+000466                00697 ENVIA_ID_2
+000466 0E02           00698         movlw 0x02
+000468 6E01           00699         movwf RECEPCION,0
+00046A 6A19           00700         clrf F_ENVIA_ID_2,0
+00046C 6820           00701         setf F_ENVIA_ID_3,0
+00046E EF?? F???      00702         goto NEXT_BIT
+                      00703 
+000472                00704 ENVIA_ID_3
+000472 0E03           00705         movlw 0x03
+000474 6E01           00706         movwf RECEPCION,0
+000476 6A20           00707         clrf F_ENVIA_ID_3,0
+000478 EF?? F???      00708         goto NEXT_BIT
+                      00709         
+00047C                00710 ENVIA_N
+00047C 0E4E           00711         movlw 0x4E
+00047E 6E01           00712         movwf RECEPCION,0
+000480 6818           00713         setf F_ENVIA_ID_1,0
+000482 6A21           00714         clrf F_ENVIA_N,0
+000484 EF?? F???      00715         goto NEXT_BIT
+                      00716 
+000488                00717 INIT_LECTURA_RAM
+000488 6AE2           00718         clrf FSR1H, 0               ;carreguem als punters de lectura la posicio inicial del array a la 
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 15
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                            RAM
+00048A 0E80           00719         movlw 0x80
+00048C 6EE1           00720         movwf FSR1L, 0
+00048E 6A11           00721         clrf INDEX, 0
+000490 0012           00722         return
+                      00723         
+000492                00724 BLINK
+000492 6A00           00725         clrf CONT_TEMPS,0           ;posem el cont_temps a 0
+000494 A08C           00726         btfss LATD,0,0              ;mirem si els LEDs estan a 0 o a 1
+000496 EF?? F???      00727             goto SET_LEDS
+00049A 6A8C           00728         clrf LATD,0                 ;posem a 0 els 10LEDs
+00049C 6A8D           00729         clrf LATE,0
+00049E EF?? F???      00730         goto LOOP
+                      00731 
+0004A2                00732 SET_LEDS
+0004A2 688C           00733         setf LATD,0                 ;podem a 1 els LEDs
+0004A4 0E03           00734         movlw 0x03
+0004A6 6E8D           00735         movwf LATE,0
+0004A8 EF?? F???      00736         goto LOOP
+                      00737 
+0004AC                00738 SLIDE
+0004AC 6A00           00739         clrf CONT_TEMPS, 0          ;posem el comptador d'interrupcions a 0
+0004AE A006           00740         btfss F_SLIDE,0,0           ;si es la primera vegada que iniciem sliding inicialitzem els LEDs
+0004B0 EC?? F???      00741             call INIT_SLIDE
+0004B4 CF8C F008      00742         movff LATD, AUX_L           ;copiem el valor dels LEds actual a les variables auxiliars
+0004B8 CF8D F007      00743         movff LATE, AUX_H
+0004BC B005           00744         btfsc ROTATE, 0, 0          ;comprovem cap on hem de girar, si es 1 anem a la dreta
+0004BE EF?? F???      00745             goto ROTATE_RIGHT
+0004C2 4608           00746         rlncf AUX_L, 1, 0           ;rotem la variable cap a l'esquerra
+0004C4 0EFE           00747         movlw 0xFE                  ;netegem el valor que hem introduit al rotar (1111 1110)
+0004C6 1608           00748         andwf AUX_L, 1, 0
+0004C8 0E80           00749         movlw 0x80                  
+0004CA 6208           00750         cpfseq AUX_L, 0             ;si el valor de aux_l es 1000 0000b, haurem de posar un 01 a la part
+                             high
+0004CC EF?? F???      00751             goto IF_2
+0004D0 0E01           00752         movlw 0x01                  ;posem un 1 a la part high
+0004D2 6E07           00753         movwf AUX_H, 0
+0004D4 EF?? F???      00754         goto FINAL_SLIDE
+                      00755 
+0004D8                00756 IF_2
+0004D8 0E01           00757         movlw 0x01                  
+0004DA 6207           00758         cpfseq AUX_H, 0             ;si la part high ja es 01, haurem de posar 11
+0004DC EF?? F???      00759             goto IF_3
+0004E0 0E03           00760         movlw 0x03                  ;posem 11 a la part high
+0004E2 6E07           00761         movwf AUX_H, 0
+0004E4 EF?? F???      00762         goto FINAL_SLIDE
+                      00763 
+0004E8                00764 IF_3
+0004E8 0E03           00765         movlw 0x03
+0004EA 6207           00766         cpfseq AUX_H, 0             ;si la part high ja es 11, haurem de posar 01(h) 1000 0000(l) i canv
+                            iar el sentit
+0004EC EF?? F???      00767             goto FINAL_SLIDE
+0004F0 0E01           00768         movlw 0x01                  
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 16
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0004F2 6E07           00769         movwf AUX_H, 0              ;posem un 01 a la part high     
+0004F4 0E80           00770         movlw 0x80
+0004F6 6E08           00771         movwf AUX_L, 0              ;posem un 1000 0000 a la part low
+0004F8 6805           00772         setf ROTATE, 0              ;canviem el sentit de la rotacio
+0004FA EF?? F???      00773         goto FINAL_SLIDE
+                      00774   
+0004FE                00775 ROTATE_RIGHT
+0004FE 4208           00776         rrncf AUX_L, 1, 0           ;rotem la variable cap a la dreta
+000500 0E7F           00777         movlw 0x7F
+000502 1608           00778         andwf AUX_L, 1, 0           ;posem un 0 a l'esquerra
+000504 0E01           00779         movlw 0x01
+000506 6207           00780         cpfseq AUX_H, 0             ;si a la part high hi ha un 01b haurem de poosar (1100 0000) a la pa
+                            rt low
+000508 EF?? F???      00781             goto IF_4
+00050C 0EC0           00782         movlw 0xC0                  ;1100 0000b
+00050E 6E08           00783         movwf AUX_L, 0
+000510 6A07           00784         clrf AUX_H                  ;netegem la part high perque hi volem un 00b
+000512 EF?? F???      00785         goto FINAL_SLIDE
+                      00786         
+000516                00787 IF_4
+000516 0E01           00788         movlw 0x01
+000518 6208           00789         cpfseq AUX_L, 0             ;mirem si hem arribat a l'ultim cas de la dreta (0000 0001)
+00051A EF?? F???      00790             goto FINAL_SLIDE
+00051E 0E06           00791         movlw 0x06
+000520 6E08           00792         movwf AUX_L
+000522 6A05           00793         clrf ROTATE, 0              ;canviem el sentit de rotacio
+000524                00794 FINAL_SLIDE
+000524 C008 FF8C      00795         movff AUX_L, LATD           ;movem els valors de les variables auxiliars als LEDs
+000528 0E0C           00796         movlw 0x0C
+00052A 168D           00797         andwf LATE, 1, 0
+00052C C007 FF8D      00798         movff AUX_H, LATE
+000530 EF?? F???      00799         goto LOOP
+                      00800 
+                      00801 ;*******
+                      00802 ;* END *
+                      00803 ;*******
+                      00804   
+                      00805         END
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 17
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+A                                 00000000
+ABDEN                             00000000
+ABDOVF                            00000007
+ACCESS                            00000000
+ACKDT                             00000005
+ACKEN                             00000004
+ACKSTAT                           00000006
+ACQT0                             00000003
+ACQT1                             00000004
+ACQT2                             00000005
+ADCON0                            00000FC2
+ADCON1                            00000FC1
+ADCON2                            00000FC0
+ADCS0                             00000000
+ADCS1                             00000001
+ADCS2                             00000002
+ADDEN                             00000003
+ADEN                              00000003
+ADFM                              00000007
+ADIE                              00000006
+ADIF                              00000006
+ADIP                              00000006
+ADMSK1                            00000001
+ADMSK2                            00000002
+ADMSK3                            00000003
+ADMSK4                            00000004
+ADMSK5                            00000005
+ADON                              00000000
+ADRES                             00000FC3
+ADRESH                            00000FC4
+ADRESL                            00000FC3
+AN0                               00000000
+AN1                               00000001
+AN10                              00000001
+AN11                              00000004
+AN12                              00000000
+AN2                               00000002
+AN3                               00000003
+AN4                               00000005
+AN5                               00000000
+AN6                               00000001
+AN7                               00000002
+AN8                               00000002
+AN9                               00000003
+AUX_H                             00000007
+AUX_L                             00000008
+BANKED                            00000001
+BAUDCON                           00000FB8
+BAUDCTL                           00000FB8
+BCLIE                             00000003
+BCLIF                             00000003
+BCLIP                             00000003
+BF                                00000000
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 18
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+BGST                              00000005
+BLINK                             00000492
+BLINK10                           00000004
+BLINK5                            00000003
+BOR                               00000000
+BRG16                             00000003
+BRGH                              00000002
+BSR                               00000FE0
+C                                 00000000
+C1INV                             00000004
+C1N                               00000000
+C1OUT_CMCON                       00000006
+C1OUT_PORTA                       00000004
+C1P                               00000003
+C2INV                             00000005
+C2N                               00000001
+C2OUT_CMCON                       00000007
+C2OUT_PORTA                       00000005
+C2P                               00000002
+CARREGA_M                         0000028C
+CARREGA_PC                        0000024A
+CCP1                              00000002
+CCP1CON                           00000FBD
+CCP1IE                            00000002
+CCP1IF                            00000002
+CCP1IP                            00000002
+CCP1M0                            00000000
+CCP1M1                            00000001
+CCP1M2                            00000002
+CCP1M3                            00000003
+CCP1X                             00000005
+CCP1Y                             00000004
+CCP2CON                           00000FBA
+CCP2IE                            00000000
+CCP2IF                            00000000
+CCP2IP                            00000000
+CCP2M0                            00000000
+CCP2M1                            00000001
+CCP2M2                            00000002
+CCP2M3                            00000003
+CCP2X                             00000005
+CCP2Y                             00000004
+CCP2_PORTB                        00000003
+CCP2_PORTC                        00000001
+CCPR1                             00000FBE
+CCPR1H                            00000FBF
+CCPR1L                            00000FBE
+CCPR2                             00000FBB
+CCPR2H                            00000FBC
+CCPR2L                            00000FBB
+CFGS                              00000006
+CHS0                              00000002
+CHS1                              00000003
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 19
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+CHS2                              00000004
+CHS3                              00000005
+CIS                               00000003
+CK                                00000006
+CKE                               00000006
+CKP                               00000004
+CLKI                              00000007
+CLKO                              00000006
+CM0                               00000000
+CM1                               00000001
+CM2                               00000002
+CMCON                             00000FB4
+CMIE                              00000006
+CMIF                              00000006
+CMIP                              00000006
+COMPARA_INDEX                     000003A2
+COMPARA_PUNTERS                   00000328
+COMPROVA_LEDS_P                   000003B4
+CONTA_BITS_H                      00000016
+CONTA_BITS_L                      00000015
+CONTINUA                          00000204
+CONTINUA_2                        00000212
+CONTINUA_3                        00000224
+CONTINUA_SET_LEDS                 000003FE
+CONT_TEMPS                        00000000
+CREN                              00000004
+CS                                00000002
+CSRC                              00000007
+CVR0                              00000000
+CVR1                              00000001
+CVR2                              00000002
+CVR3                              00000003
+CVRCON                            00000FB5
+CVREF                             00000002
+CVREN                             00000007
+CVROE                             00000006
+CVRR                              00000005
+CVRSS                             00000004
+D                                 00000005
+DC                                00000001
+DC1B0                             00000004
+DC1B1                             00000005
+DC2B0                             00000004
+DC2B1                             00000005
+DDRA                              TRISA
+DDRB                              TRISB
+DDRC                              TRISC
+DDRD                              TRISD
+DDRE                              TRISE
+DIFERENTS                         0000033C
+DONE                              00000001
+D_A                               00000005
+D_NOT_A                           00000005
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 20
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+ECCP1AS                           00000FB6
+ECCP1CON                          00000FBD
+ECCP1DEL                          00000FB7
+ECCPAS0                           00000004
+ECCPAS1                           00000005
+ECCPAS2                           00000006
+ECCPASE                           00000007
+EEADR                             00000FA9
+EECON1                            00000FA6
+EECON2                            00000FA7
+EEDATA                            00000FA8
+EEIE                              00000004
+EEIF                              00000004
+EEIP                              00000004
+EEPGD                             00000007
+ENVIA_0                           0000036E
+ENVIA_0_2                         0000037A
+ENVIA_1                           00000388
+ENVIA_1_2                         00000392
+ENVIA_ID_1                        0000045A
+ENVIA_ID_2                        00000466
+ENVIA_ID_3                        00000472
+ENVIA_M                           0000030C
+ENVIA_N                           0000047C
+ENVIA_PC                          000002D4
+ENVIA_RF_PC                       00000284
+ESPERA_10                         000002AC
+ESPERA_10_RF                      00000440
+ESPERA_10_RF_2                    0000044E
+ESPERA_REBOTS                     00000302
+FAST                              00000001
+FERR                              00000002
+FINAL_SLIDE                       00000524
+FLT0                              00000000
+FLTS                              00000002
+FREE                              00000004
+FSR0                              00000000
+FSR0H                             00000FEA
+FSR0L                             00000FE9
+FSR1                              00000001
+FSR1H                             00000FE2
+FSR1L                             00000FE1
+FSR2                              00000002
+FSR2H                             00000FDA
+FSR2L                             00000FD9
+F_ENVIA                           00000010
+F_ENVIA_10                        00000017
+F_ENVIA_ID_1                      00000018
+F_ENVIA_ID_2                      00000019
+F_ENVIA_ID_3                      00000020
+F_ENVIA_N                         00000021
+F_SLIDE                           00000006
+GCEN                              00000007
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 21
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+GIE                               00000007
+GIEH                              00000007
+GIEL                              00000006
+GIE_GIEH                          00000007
+GO                                00000001
+GO_DONE                           00000001
+GO_NOT_DONE                       00000001
+HIGH_INT                          0000014A
+HI_INT_VECTOR                     00000008
+HLVDCON                           00000FD2
+HLVDEN                            00000004
+HLVDIE                            00000002
+HLVDIF                            00000002
+HLVDIN                            00000005
+HLVDIP                            00000002
+HLVDL0                            00000000
+HLVDL1                            00000001
+HLVDL2                            00000002
+HLVDL3                            00000003
+IBF                               00000007
+IBOV                              00000005
+IDLEN                             00000007
+IF_2                              000004D8
+IF_3                              000004E8
+IF_4                              00000516
+IGUALS                            0000041A
+INC_1                             000003DA
+INC_MAXBIT                        00000278
+INC_PER100                        000003DE
+INDEX                             00000011
+INDF0                             00000FEF
+INDF1                             00000FE7
+INDF2                             00000FDF
+INIT_ESCRIPTURA_RAM               000002C6
+INIT_LECTURA_RAM                  00000488
+INIT_PORT                         000001A4
+INIT_RAM                          00000198
+INIT_RF                           0000042E
+INIT_SIO                          000001B8
+INIT_SLIDE                        0000022A
+INIT_TIMER                        0000015C
+INIT_VARS                         0000016C
+INT0                              00000000
+INT0E                             00000004
+INT0F                             00000001
+INT0IE                            00000004
+INT0IF                            00000001
+INT1                              00000001
+INT1E                             00000003
+INT1F                             00000000
+INT1IE                            00000003
+INT1IF                            00000000
+INT1IP                            00000006
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 22
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+INT1P                             00000006
+INT2                              00000002
+INT2E                             00000004
+INT2F                             00000001
+INT2IE                            00000004
+INT2IF                            00000001
+INT2IP                            00000007
+INT2P                             00000007
+INTCON                            00000FF2
+INTCON2                           00000FF1
+INTCON3                           00000FF0
+INTEDG0                           00000006
+INTEDG1                           00000005
+INTEDG2                           00000004
+INTSRC                            00000007
+IOFS                              00000002
+IPEN                              00000007
+IPR1                              00000F9F
+IPR2                              00000FA2
+IRCF0                             00000004
+IRCF1                             00000005
+IRCF2                             00000006
+IRVST                             00000005
+KBI0                              00000004
+KBI1                              00000005
+KBI2                              00000006
+KBI3                              00000007
+LATA                              00000F89
+LATA0                             00000000
+LATA1                             00000001
+LATA2                             00000002
+LATA3                             00000003
+LATA4                             00000004
+LATA5                             00000005
+LATA6                             00000006
+LATA7                             00000007
+LATB                              00000F8A
+LATB0                             00000000
+LATB1                             00000001
+LATB2                             00000002
+LATB3                             00000003
+LATB4                             00000004
+LATB5                             00000005
+LATB6                             00000006
+LATB7                             00000007
+LATC                              00000F8B
+LATC0                             00000000
+LATC1                             00000001
+LATC2                             00000002
+LATC3                             00000003
+LATC4                             00000004
+LATC5                             00000005
+LATC6                             00000006
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 23
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+LATC7                             00000007
+LATD                              00000F8C
+LATD0                             00000000
+LATD1                             00000001
+LATD2                             00000002
+LATD3                             00000003
+LATD4                             00000004
+LATD5                             00000005
+LATD6                             00000006
+LATD7                             00000007
+LATE                              00000F8D
+LATE0                             00000000
+LATE1                             00000001
+LATE2                             00000002
+LOOP                              000001E4
+LOW_INT_VECTOR                    00000018
+LVDCON                            00000FD2
+LVDEN                             00000004
+LVDIE                             00000002
+LVDIF                             00000002
+LVDIP                             00000002
+LVDL0                             00000000
+LVDL1                             00000001
+LVDL2                             00000002
+LVDL3                             00000003
+LVV0                              00000000
+LVV1                              00000001
+LVV2                              00000002
+LVV3                              00000003
+MAIN                              000001D4
+MAXBIT_H                          00000012
+MAXBIT_L                          00000013
+MCLR                              00000003
+N                                 00000004
+NEXT_BIT                          00000364
+NOT_A                             00000005
+NOT_ADDRESS                       00000005
+NOT_BOR                           00000000
+NOT_CS                            00000002
+NOT_DONE                          00000001
+NOT_MCLR                          00000003
+NOT_PD                            00000002
+NOT_POR                           00000001
+NOT_RBPU                          00000007
+NOT_RD                            00000000
+NOT_RI                            00000004
+NOT_SS                            00000005
+NOT_T1SYNC                        00000002
+NOT_T3SYNC                        00000002
+NOT_TO                            00000003
+NOT_W                             00000002
+NOT_WR                            00000001
+NOT_WRITE                         00000002
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 24
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+OBF                               00000006
+OERR                              00000001
+OSC1                              00000007
+OSC2                              00000006
+OSCCON                            00000FD3
+OSCFIE                            00000007
+OSCFIF                            00000007
+OSCFIP                            00000007
+OSCTUNE                           00000F9B
+OSTS                              00000003
+OV                                00000003
+P                                 00000004
+P1A                               00000002
+P1B                               00000005
+P1C                               00000006
+P1D                               00000007
+P1M0                              00000006
+P1M1                              00000007
+PC                                00000FF9
+PCFG0                             00000000
+PCFG1                             00000001
+PCFG2                             00000002
+PCFG3                             00000003
+PCL                               00000FF9
+PCLATH                            00000FFA
+PCLATU                            00000FFB
+PD                                00000002
+PDC0                              00000000
+PDC1                              00000001
+PDC2                              00000002
+PDC3                              00000003
+PDC4                              00000004
+PDC5                              00000005
+PDC6                              00000006
+PEIE                              00000006
+PEIE_GIEL                         00000006
+PEN                               00000002
+PER10                             00000014
+PGC                               00000006
+PGD                               00000007
+PGM                               00000005
+PIE1                              00000F9D
+PIE2                              00000FA0
+PIR1                              00000F9E
+PIR2                              00000FA1
+PLLEN                             00000006
+PLUSW0                            00000FEB
+PLUSW1                            00000FE3
+PLUSW2                            00000FDB
+POR                               00000001
+PORTA                             00000F80
+PORTB                             00000F81
+PORTC                             00000F82
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 25
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+PORTD                             00000F83
+PORTE                             00000F84
+POSTDEC0                          00000FED
+POSTDEC1                          00000FE5
+POSTDEC2                          00000FDD
+POSTINC0                          00000FEE
+POSTINC1                          00000FE6
+POSTINC2                          00000FDE
+PR2                               00000FCB
+PREINC0                           00000FEC
+PREINC1                           00000FE4
+PREINC2                           00000FDC
+PROD                              00000FF3
+PRODH                             00000FF4
+PRODL                             00000FF3
+PRSEN                             00000007
+PSA                               00000003
+PSP0                              00000000
+PSP1                              00000001
+PSP2                              00000002
+PSP3                              00000003
+PSP4                              00000004
+PSP5                              00000005
+PSP6                              00000006
+PSP7                              00000007
+PSPIE                             00000007
+PSPIF                             00000007
+PSPIP                             00000007
+PSPMODE                           00000004
+PSSAC0                            00000002
+PSSAC1                            00000003
+PSSBD0                            00000000
+PSSBD1                            00000001
+PWM1CON                           00000FB7
+R                                 00000002
+RA0                               00000000
+RA1                               00000001
+RA2                               00000002
+RA3                               00000003
+RA4                               00000004
+RA5                               00000005
+RA6                               00000006
+RA7                               00000007
+RB0                               00000000
+RB1                               00000001
+RB2                               00000002
+RB3                               00000003
+RB4                               00000004
+RB5                               00000005
+RB6                               00000006
+RB7                               00000007
+RBIE                              00000003
+RBIF                              00000000
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 26
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+RBIP                              00000000
+RBPU                              00000007
+RC0                               00000000
+RC1                               00000001
+RC2                               00000002
+RC3                               00000003
+RC4                               00000004
+RC5                               00000005
+RC6                               00000006
+RC7                               00000007
+RCEN                              00000003
+RCIDL                             00000006
+RCIE                              00000005
+RCIF                              00000005
+RCIP                              00000005
+RCMT                              00000006
+RCON                              00000FD0
+RCREG                             00000FAE
+RCSTA                             00000FAB
+RD                                00000000
+RD0                               00000000
+RD1                               00000001
+RD16                              00000007
+RD2                               00000002
+RD3                               00000003
+RD4                               00000004
+RD5                               00000005
+RD6                               00000006
+RD7                               00000007
+RE0                               00000000
+RE1                               00000001
+RE2                               00000002
+RE3                               00000003
+REBUT                             000002DE
+REBUT_2                           000002DA
+REBUT_PC                          00000254
+RECEPCION                         00000001
+RECEPCION_PC                      00000234
+RESET_TIMER                       000001C8
+RESET_VECTOR                      00000000
+RI                                00000004
+ROTATE                            00000005
+ROTATE_PER100                     000003C4
+ROTATE_RIGHT                      000004FE
+RSEN                              00000001
+RX                                00000007
+RX9                               00000006
+RX9D                              00000000
+RXDTP                             00000005
+R_NOT_W                           00000002
+R_W                               00000002
+S                                 00000003
+SBOREN                            00000006
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 27
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+SCK                               00000003
+SCKP                              00000004
+SCL                               00000003
+SCS0                              00000000
+SCS1                              00000001
+SDA                               00000004
+SDI                               00000004
+SDO                               00000005
+SEGONS                            00000002
+SEN                               00000000
+SENDB                             00000003
+SET_BLINK5                        00000272
+SET_BLINK5_M                      000002FC
+SET_LEDS                          000004A2
+SET_LEDS_P                        000003E8
+SET_SLIDE                         00000414
+SLIDE                             000004AC
+SLIDING                           00000009
+SMP                               00000007
+SP0                               00000000
+SP1                               00000001
+SP2                               00000002
+SP3                               00000003
+SP4                               00000004
+SPBRG                             00000FAF
+SPBRGH                            00000FB0
+SPEN                              00000007
+SREN                              00000005
+SSPADD                            00000FC8
+SSPBUF                            00000FC9
+SSPCON1                           00000FC6
+SSPCON2                           00000FC5
+SSPEN                             00000005
+SSPIE                             00000003
+SSPIF                             00000003
+SSPIP                             00000003
+SSPM0                             00000000
+SSPM1                             00000001
+SSPM2                             00000002
+SSPM3                             00000003
+SSPOV                             00000006
+SSPSTAT                           00000FC7
+STATUS                            00000FD8
+STKFUL                            00000007
+STKOVF                            00000007
+STKPTR                            00000FFC
+STKUNF                            00000006
+SWDTE                             00000000
+SWDTEN                            00000000
+SYNC                              00000004
+T016BIT                           00000006
+T08BIT                            00000006
+T0CKI                             00000004
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 28
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+T0CON                             00000FD5
+T0CS                              00000005
+T0IE                              00000005
+T0IF                              00000002
+T0PS0                             00000000
+T0PS1                             00000001
+T0PS2                             00000002
+T0SE                              00000004
+T13CKI                            00000000
+T1CKI                             00000000
+T1CKPS0                           00000004
+T1CKPS1                           00000005
+T1CON                             00000FCD
+T1OSCEN                           00000003
+T1OSI                             00000001
+T1OSO                             00000000
+T1RUN                             00000006
+T1SYNC                            00000002
+T2CKPS0                           00000000
+T2CKPS1                           00000001
+T2CON                             00000FCA
+T2OUTPS0                          00000003
+T2OUTPS1                          00000004
+T2OUTPS2                          00000005
+T2OUTPS3                          00000006
+T3CCP1                            00000003
+T3CCP2                            00000006
+T3CKPS0                           00000004
+T3CKPS1                           00000005
+T3CON                             00000FB1
+T3SYNC                            00000002
+TABLAT                            00000FF5
+TBLPTR                            00000FF6
+TBLPTRH                           00000FF7
+TBLPTRL                           00000FF6
+TBLPTRU                           00000FF8
+TMR0                              00000FD6
+TMR0H                             00000FD7
+TMR0IE                            00000005
+TMR0IF                            00000002
+TMR0IP                            00000002
+TMR0L                             00000FD6
+TMR0ON                            00000007
+TMR1                              00000FCE
+TMR1CS                            00000001
+TMR1H                             00000FCF
+TMR1IE                            00000000
+TMR1IF                            00000000
+TMR1IP                            00000000
+TMR1L                             00000FCE
+TMR1ON                            00000000
+TMR2                              00000FCC
+TMR2IE                            00000001
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 29
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+TMR2IF                            00000001
+TMR2IP                            00000001
+TMR2ON                            00000002
+TMR3                              00000FB2
+TMR3CS                            00000001
+TMR3H                             00000FB3
+TMR3IE                            00000001
+TMR3IF                            00000001
+TMR3IP                            00000001
+TMR3L                             00000FB2
+TMR3ON                            00000000
+TO                                00000003
+TOS                               00000FFD
+TOSH                              00000FFE
+TOSL                              00000FFD
+TOSU                              00000FFF
+TOUTPS0                           00000003
+TOUTPS1                           00000004
+TOUTPS2                           00000005
+TOUTPS3                           00000006
+TRISA                             00000F92
+TRISA0                            00000000
+TRISA1                            00000001
+TRISA2                            00000002
+TRISA3                            00000003
+TRISA4                            00000004
+TRISA5                            00000005
+TRISA6                            00000006
+TRISA7                            00000007
+TRISB                             00000F93
+TRISB0                            00000000
+TRISB1                            00000001
+TRISB2                            00000002
+TRISB3                            00000003
+TRISB4                            00000004
+TRISB5                            00000005
+TRISB6                            00000006
+TRISB7                            00000007
+TRISC                             00000F94
+TRISC0                            00000000
+TRISC1                            00000001
+TRISC2                            00000002
+TRISC3                            00000003
+TRISC4                            00000004
+TRISC5                            00000005
+TRISC6                            00000006
+TRISC7                            00000007
+TRISD                             00000F95
+TRISD0                            00000000
+TRISD1                            00000001
+TRISD2                            00000002
+TRISD3                            00000003
+TRISD4                            00000004
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 30
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+TRISD5                            00000005
+TRISD6                            00000006
+TRISD7                            00000007
+TRISE                             00000F96
+TRISE0                            00000000
+TRISE1                            00000001
+TRISE2                            00000002
+TRMT                              00000001
+TUN0                              00000000
+TUN1                              00000001
+TUN2                              00000002
+TUN3                              00000003
+TUN4                              00000004
+TX                                00000006
+TX9                               00000006
+TX9D                              00000000
+TXCKP                             00000004
+TXEN                              00000005
+TXIE                              00000004
+TXIF                              00000004
+TXIP                              00000004
+TXREG                             00000FAD
+TXSTA                             00000FAC
+UA                                00000001
+VCFG0                             00000004
+VCFG1                             00000005
+VDIRMAG                           00000007
+VPP                               00000003
+VREFM                             00000002
+VREFP                             00000003
+W                                 00000000
+WAIT_BYTE                         0000024E
+WCOL                              00000007
+WDTCON                            00000FD1
+WHILE_CARREGA                     000002BC
+WHILE_ENVIA                       00000424
+WHILE_TRAMA                       000002F2
+WHILE_TRAMA_PC                    00000268
+WR                                00000001
+WREG                              00000FE8
+WREN                              00000002
+WRERR                             00000003
+WUE                               00000001
+Z                                 00000002
+_BBSIZ_BB1K_4L                    000000FF
+_BBSIZ_BB256_4L                   000000CF
+_BBSIZ_BB512_4L                   000000DF
+_BORV_0_2L                        000000E7
+_BORV_1_2L                        000000EF
+_BORV_2_2L                        000000F7
+_BORV_3_2L                        000000FF
+_BOR_NOSLP_2L                     000000FD
+_BOR_OFF_2L                       000000F9
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 31
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+_BOR_ON_2L                        000000FF
+_BOR_SOFT_2L                      000000FB
+_CCP2MX_RB3_3H                    000000FE
+_CCP2MX_RC1_3H                    000000FF
+_CONFIG1H                         00300001
+_CONFIG2H                         00300003
+_CONFIG2L                         00300002
+_CONFIG3H                         00300005
+_CONFIG4L                         00300006
+_CONFIG5H                         00300009
+_CONFIG5L                         00300008
+_CONFIG6H                         0030000B
+_CONFIG6L                         0030000A
+_CONFIG7H                         0030000D
+_CONFIG7L                         0030000C
+_CP0_OFF_5L                       000000FF
+_CP0_ON_5L                        000000FE
+_CP1_OFF_5L                       000000FF
+_CP1_ON_5L                        000000FD
+_CPB_OFF_5H                       000000FF
+_CPB_ON_5H                        000000BF
+_CPD_OFF_5H                       000000FF
+_CPD_ON_5H                        0000007F
+_DEBUG_OFF_4L                     000000FF
+_DEBUG_ON_4L                      0000007F
+_DEVID1                           003FFFFE
+_DEVID2                           003FFFFF
+_EBTR0_OFF_7L                     000000FF
+_EBTR0_ON_7L                      000000FE
+_EBTR1_OFF_7L                     000000FF
+_EBTR1_ON_7L                      000000FD
+_EBTRB_OFF_7H                     000000FF
+_EBTRB_ON_7H                      000000BF
+_FCMEN_OFF_1H                     000000BF
+_FCMEN_ON_1H                      000000FF
+_IDLOC0                           00200000
+_IDLOC1                           00200001
+_IDLOC2                           00200002
+_IDLOC3                           00200003
+_IDLOC4                           00200004
+_IDLOC5                           00200005
+_IDLOC6                           00200006
+_IDLOC7                           00200007
+_IESO_OFF_1H                      0000007F
+_IESO_ON_1H                       000000FF
+_LPT1OSC_OFF_3H                   000000FB
+_LPT1OSC_ON_3H                    000000FF
+_LVP_OFF_4L                       000000FB
+_LVP_ON_4L                        000000FF
+_MCLRE_OFF_3H                     0000007F
+_MCLRE_ON_3H                      000000FF
+_OSC_ECIO_1H                      000000F5
+_OSC_EC_1H                        000000F4
+MPASM 5.73                 CODIASSEMBLER.ASM   5-23-2017  11:41:21         PAGE 32
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+_OSC_HSPLL_1H                     000000F6
+_OSC_HS_1H                        000000F2
+_OSC_INTIO1_1H                    000000F9
+_OSC_INTIO2_1H                    000000F8
+_OSC_LP_1H                        000000F0
+_OSC_RCIO_1H                      000000F7
+_OSC_RC_1H                        000000F3
+_OSC_XT_1H                        000000F1
+_PBADEN_ANA_3H                    000000FF
+_PBADEN_DIG_3H                    000000FD
+_PWRT_OFF_2L                      000000FF
+_PWRT_ON_2L                       000000FE
+_STVREN_OFF_4L                    000000FE
+_STVREN_ON_4L                     000000FF
+_WDTPS_1024_2H                    000000F5
+_WDTPS_128_2H                     000000EF
+_WDTPS_16384_2H                   000000FD
+_WDTPS_16_2H                      000000E9
+_WDTPS_1_2H                       000000E1
+_WDTPS_2048_2H                    000000F7
+_WDTPS_256_2H                     000000F1
+_WDTPS_2_2H                       000000E3
+_WDTPS_32768_2H                   000000FF
+_WDTPS_32_2H                      000000EB
+_WDTPS_4096_2H                    000000F9
+_WDTPS_4_2H                       000000E5
+_WDTPS_512_2H                     000000F3
+_WDTPS_64_2H                      000000ED
+_WDTPS_8192_2H                    000000FB
+_WDTPS_8_2H                       000000E7
+_WDT_OFF_2H                       000000FE
+_WDT_ON_2H                        000000FF
+_WRT0_OFF_6L                      000000FF
+_WRT0_ON_6L                       000000FE
+_WRT1_OFF_6L                      000000FF
+_WRT1_ON_6L                       000000FD
+_WRTB_OFF_6H                      000000FF
+_WRTB_ON_6H                       000000BF
+_WRTC_OFF_6H                      000000FF
+_WRTC_ON_6H                       000000DF
+_WRTD_OFF_6H                      000000FF
+_WRTD_ON_6H                       0000007F
+_XINST_OFF_4L                     000000BF
+_XINST_ON_4L                      000000FF
+__18F4321                         00000001
+
+Errors   :     0
+Warnings :     1 reported,     0 suppressed
+Messages :     0 reported,     0 suppressed
+
+

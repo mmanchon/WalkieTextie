@@ -1,0 +1,178 @@
+MPLINK 5.08, LINKER
+Linker Map File - Created Tue May 23 11:41:22 2017
+
+                                 Section Info
+                  Section       Type    Address   Location Size(Bytes)
+                ---------  ---------  ---------  ---------  ---------
+                   .org_0       code   0x000000    program   0x000004
+                   .cinit    romdata   0x000004    program   0x000002
+                   .org_1       code   0x000008    program   0x000004
+                   .org_2       code   0x000018    program   0x000002
+                   .org_3       code   0x000020    program   0x000514
+.config_300001_BUILD/DEFAULT/PRODUCTION/CODIASS    romdata   0x300001    program   0x000001
+.config_300003_BUILD/DEFAULT/PRODUCTION/CODIASS    romdata   0x300003    program   0x000001
+.config_300005_BUILD/DEFAULT/PRODUCTION/CODIASS    romdata   0x300005    program   0x000001
+
+
+
+                              Program Memory Usage 
+                               Start         End      
+                           ---------   ---------      
+                            0x000000    0x000005      
+                            0x000008    0x00000b      
+                            0x000018    0x000019      
+                            0x000020    0x000533      
+                            0x300001    0x300001      
+                            0x300003    0x300003      
+                            0x300005    0x300005      
+            1315 out of 8472 program addresses used, program memory utilization is 15%
+
+
+
+                              Symbols - Sorted by Name
+                     Name    Address   Location    Storage File                     
+                ---------  ---------  ---------  --------- ---------                
+                    BLINK   0x000492    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                CARREGA_M   0x00028c    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               CARREGA_PC   0x00024a    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+            COMPARA_INDEX   0x0003a2    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+          COMPARA_PUNTERS   0x000328    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+          COMPROVA_LEDS_P   0x0003b4    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                 CONTINUA   0x000204    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               CONTINUA_2   0x000212    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               CONTINUA_3   0x000224    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+        CONTINUA_SET_LEDS   0x0003fe    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                DIFERENTS   0x00033c    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                  ENVIA_0   0x00036e    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                ENVIA_0_2   0x00037a    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                  ENVIA_1   0x000388    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                ENVIA_1_2   0x000392    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               ENVIA_ID_1   0x00045a    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               ENVIA_ID_2   0x000466    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               ENVIA_ID_3   0x000472    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                  ENVIA_M   0x00030c    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                  ENVIA_N   0x00047c    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                 ENVIA_PC   0x0002d4    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+              ENVIA_RF_PC   0x000284    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                ESPERA_10   0x0002ac    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+             ESPERA_10_RF   0x000440    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+           ESPERA_10_RF_2   0x00044e    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+            ESPERA_REBOTS   0x000302    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+              FINAL_SLIDE   0x000524    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                 HIGH_INT   0x00014a    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+            HI_INT_VECTOR   0x000008    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                     IF_2   0x0004d8    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                     IF_3   0x0004e8    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                     IF_4   0x000516    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                   IGUALS   0x00041a    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                    INC_1   0x0003da    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               INC_MAXBIT   0x000278    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               INC_PER100   0x0003de    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+      INIT_ESCRIPTURA_RAM   0x0002c6    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+         INIT_LECTURA_RAM   0x000488    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                INIT_PORT   0x0001a4    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                 INIT_RAM   0x000198    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                  INIT_RF   0x00042e    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                 INIT_SIO   0x0001b8    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               INIT_SLIDE   0x00022a    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               INIT_TIMER   0x00015c    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                INIT_VARS   0x00016c    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                     LOOP   0x0001e4    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+           LOW_INT_VECTOR   0x000018    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                     MAIN   0x0001d4    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                 NEXT_BIT   0x000364    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                    REBUT   0x0002de    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                  REBUT_2   0x0002da    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                 REBUT_PC   0x000254    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+             RECEPCION_PC   0x000234    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+              RESET_TIMER   0x0001c8    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+             RESET_VECTOR   0x000000    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+            ROTATE_PER100   0x0003c4    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+             ROTATE_RIGHT   0x0004fe    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               SET_BLINK5   0x000272    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+             SET_BLINK5_M   0x0002fc    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                 SET_LEDS   0x0004a2    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               SET_LEDS_P   0x0003e8    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                SET_SLIDE   0x000414    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                    SLIDE   0x0004ac    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                WAIT_BYTE   0x00024e    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+            WHILE_CARREGA   0x0002bc    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+              WHILE_ENVIA   0x000424    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+              WHILE_TRAMA   0x0002f2    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+           WHILE_TRAMA_PC   0x000268    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+
+
+
+                              Symbols - Sorted by Address
+                     Name    Address   Location    Storage File                     
+                ---------  ---------  ---------  --------- ---------                
+             RESET_VECTOR   0x000000    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+            HI_INT_VECTOR   0x000008    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+           LOW_INT_VECTOR   0x000018    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                 HIGH_INT   0x00014a    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               INIT_TIMER   0x00015c    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                INIT_VARS   0x00016c    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                 INIT_RAM   0x000198    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                INIT_PORT   0x0001a4    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                 INIT_SIO   0x0001b8    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+              RESET_TIMER   0x0001c8    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                     MAIN   0x0001d4    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                     LOOP   0x0001e4    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                 CONTINUA   0x000204    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               CONTINUA_2   0x000212    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               CONTINUA_3   0x000224    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               INIT_SLIDE   0x00022a    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+             RECEPCION_PC   0x000234    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               CARREGA_PC   0x00024a    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                WAIT_BYTE   0x00024e    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                 REBUT_PC   0x000254    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+           WHILE_TRAMA_PC   0x000268    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               SET_BLINK5   0x000272    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               INC_MAXBIT   0x000278    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+              ENVIA_RF_PC   0x000284    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                CARREGA_M   0x00028c    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                ESPERA_10   0x0002ac    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+            WHILE_CARREGA   0x0002bc    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+      INIT_ESCRIPTURA_RAM   0x0002c6    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                 ENVIA_PC   0x0002d4    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                  REBUT_2   0x0002da    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                    REBUT   0x0002de    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+              WHILE_TRAMA   0x0002f2    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+             SET_BLINK5_M   0x0002fc    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+            ESPERA_REBOTS   0x000302    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                  ENVIA_M   0x00030c    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+          COMPARA_PUNTERS   0x000328    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                DIFERENTS   0x00033c    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                 NEXT_BIT   0x000364    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                  ENVIA_0   0x00036e    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                ENVIA_0_2   0x00037a    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                  ENVIA_1   0x000388    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                ENVIA_1_2   0x000392    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+            COMPARA_INDEX   0x0003a2    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+          COMPROVA_LEDS_P   0x0003b4    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+            ROTATE_PER100   0x0003c4    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                    INC_1   0x0003da    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               INC_PER100   0x0003de    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               SET_LEDS_P   0x0003e8    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+        CONTINUA_SET_LEDS   0x0003fe    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                SET_SLIDE   0x000414    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                   IGUALS   0x00041a    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+              WHILE_ENVIA   0x000424    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                  INIT_RF   0x00042e    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+             ESPERA_10_RF   0x000440    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+           ESPERA_10_RF_2   0x00044e    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               ENVIA_ID_1   0x00045a    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               ENVIA_ID_2   0x000466    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+               ENVIA_ID_3   0x000472    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                  ENVIA_N   0x00047c    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+         INIT_LECTURA_RAM   0x000488    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                    BLINK   0x000492    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                 SET_LEDS   0x0004a2    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                    SLIDE   0x0004ac    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                     IF_2   0x0004d8    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                     IF_3   0x0004e8    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+             ROTATE_RIGHT   0x0004fe    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+                     IF_4   0x000516    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+              FINAL_SLIDE   0x000524    program     static C:\Users\Manel Manchon\MPLABXProjects\Practica2Fase1.X\CodiAssembler.asm
+
+
